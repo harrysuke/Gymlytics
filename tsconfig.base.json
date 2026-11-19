@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@gymlytics/shared": ["packages/shared/src/index.ts"],
+      "@gymlytics/db": ["packages/db/src/index.ts"],
+      "@gymlytics/sync": ["packages/sync/src/index.ts"],
+      "@gymlytics/payments": ["packages/payments/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist"]
+}

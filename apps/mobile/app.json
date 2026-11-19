@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Gymlytics",
+    "slug": "gymlytics",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "gymlytics",
+    "userInterfaceStyle": "light",
+    "ios": { "supportsTablet": true },
+    "android": { "adaptiveIcon": { "backgroundColor": "#1e1b4b" } },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1795057546515,
+      "tag": "0000_clear_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1795064350988,
+      "tag": "0001_sturdy_tombstone",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795066663307,
+      "tag": "0002_sour_james_howlett",
+      "breakpoints": true
+    }
+  ]
+}
