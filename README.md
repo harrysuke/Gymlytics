@@ -16,6 +16,41 @@ pnpm dev
 - API: http://localhost:3000 · Web (admin / kiosk / waiver / family / embeds): http://localhost:5173
 - Mobile: `pnpm --filter @gymlytics/mobile start`
 
+## Docker
+
+Two multi-stage images: `Dockerfile.api` (Fastify + native `better-sqlite3`) and
+`Dockerfile.web` (Vite build served by nginx). nginx is the only public port and
+reverse-proxies `/v1` and `/health` to the API, so the SPA and mobile app keep
+using same-origin-style requests with no CORS configuration.
+
+```bash
+cp .env.example .env
+# Put a strong random value in JWT_SECRET (required by the stack), e.g.:
+#   openssl rand -hex 32
+docker compose up --build          # http://localhost:8080
+docker compose logs -f api
+```
+
+The SQLite file lives in the `gymlytics-data` volume at `/data/gymlytics.db`.
+The API entrypoint applies migrations on every start but seeds the demo
+academy only when the database file is new, so restarts preserve your data.
+`docker compose down -v` removes the volume (and all data).
+
+Useful overrides in `.env`: `WEB_PORT` (default `8080`), `GHCR_OWNER` and
+`IMAGE_TAG` (registry image names used by `docker compose pull`), plus any of
+the API variables listed in `.env.example`. To publish the API directly, add a
+`ports: ["3000:3000"]` entry to the `api` service. For the Expo app, point
+`EXPO_PUBLIC_API_URL` at the nginx port (`http://<host>:8080`).
+
+Standalone builds:
+
+```bash
+docker build -f Dockerfile.api -t gymlytics-api .
+docker build -f Dockerfile.web -t gymlytics-web .
+# Only if the API is on a different origin:
+docker build -f Dockerfile.web --build-arg VITE_API_URL=https://api.example.com -t gymlytics-web .
+```
+
 ## Analytics & reporting
 
 Live, tenant-scoped analytics are available at `/v1/analytics/*` and `/admin/analytics`:
@@ -102,6 +137,25 @@ pnpm --filter @gymlytics/api smoke   # 27-check end-to-end walkthrough
 
 The API suites run against throwaway copies of the seeded database
 (`data/api-test.db`, `data/api-saas-test.db`), so they never mutate working data.
+
+## CI/CD
+
+- **CI** (`.github/workflows/ci.yml`) runs on pull requests and pushes to
+  `master`/`main`: frozen-lockfile install → migrate + seed a fresh test
+  database → typecheck → tests → build → API smoke walkthrough → both Docker
+  images built (not pushed). The seed step is required because `data/` is
+  gitignored and the API integration tests copy that database.
+- **CD** (`.github/workflows/cd.yml`) runs on pushes to `master`/`main` and
+  `v*` tags: builds and pushes `ghcr.io/<owner>/gymlytics-api` and
+  `ghcr.io/<owner>/gymlytics-web` with branch/tag, commit-SHA and `latest`
+  tags, using GitHub Actions cache for faster rebuilds.
+
+Setup: enable read/write workflow permissions (Settings → Actions → General)
+so `GITHUB_TOKEN` can publish packages. On a server, check out the repo with a
+`.env`, then `docker compose pull && docker compose up -d`; set `GHCR_OWNER`
+in that `.env` if the images come from a fork. The optional SSH deploy job is
+off by default — set repository variable `DEPLOY_ENABLED=true` and secrets
+`DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH` to enable it.
 
 ## Troubleshooting
 

@@ -1,0 +1,44 @@
+# syntax=docker/dockerfile:1.7
+# Vue 3 admin console — static build served by nginx, reverse-proxying /v1 and
+# /health to the API so the browser keeps using same-origin requests (no CORS).
+
+# ---------------------------------------------------------------------------
+# deps: install the workspace from the lockfile.
+# ---------------------------------------------------------------------------
+FROM node:22-bookworm-slim AS deps
+
+RUN corepack enable \
+ && corepack prepare pnpm@9.12.0 --activate \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY apps/*/package.json ./apps/
+COPY packages/*/package.json ./packages/
+
+RUN pnpm install --frozen-lockfile
+
+# ---------------------------------------------------------------------------
+# build: VITE_API_URL is intentionally left empty so the app calls /v1 on the
+# same origin. Set --build-arg VITE_API_URL only for a separately hosted API.
+# ---------------------------------------------------------------------------
+FROM deps AS build
+COPY . .
+ARG VITE_API_URL=""
+ENV VITE_API_URL=${VITE_API_URL}
+RUN pnpm --filter @gymlytics/web build
+
+# ---------------------------------------------------------------------------
+# runner: nginx renders the config template with API_UPSTREAM at startup.
+# ---------------------------------------------------------------------------
+FROM nginx:1.27-alpine AS runner
+
+ENV API_UPSTREAM=api:3000
+
+COPY apps/web/nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/apps/web/dist /usr/share/nginx/html
+
+EXPOSE 80

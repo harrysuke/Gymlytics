@@ -1,0 +1,81 @@
+name: gymlytics
+
+# Local:   JWT_SECRET=<random> docker compose up --build
+# Server:  docker compose pull && docker compose up -d   (uses GHCR images)
+# The web service is the only public port; nginx proxies /v1 and /health to
+# the API, so the SPA keeps making same-origin requests.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: ghcr.io/${GHCR_OWNER:-harrysuke}/gymlytics-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_HOST: 0.0.0.0
+      API_PORT: 3000
+      DATABASE_URL: file:/data/gymlytics.db
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env before starting the stack}
+      ACCESS_TOKEN_TTL_SECONDS: ${ACCESS_TOKEN_TTL_SECONDS:-900}
+      DEVICE_TOKEN_TTL_SECONDS: ${DEVICE_TOKEN_TTL_SECONDS:-43200}
+      REFRESH_TOKEN_TTL_DAYS: ${REFRESH_TOKEN_TTL_DAYS:-30}
+      KIOSK_DEVICE_KEY: ${KIOSK_DEVICE_KEY:-dev-kiosk-key}
+      KIOSK_PIN_LENGTH: ${KIOSK_PIN_LENGTH:-4}
+      HLC_DEVICE_ID: ${HLC_DEVICE_ID:-kiosk-main-lobby}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8080}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-http://localhost:8080}
+      JOBS_ENABLED: ${JOBS_ENABLED:-true}
+      SYNC_BATCH_SIZE: ${SYNC_BATCH_SIZE:-100}
+      SYNC_PUSH_INTERVAL_MS: ${SYNC_PUSH_INTERVAL_MS:-5000}
+      SYNC_BACKOFF_BASE_MS: ${SYNC_BACKOFF_BASE_MS:-1000}
+      SYNC_BACKOFF_MAX_MS: ${SYNC_BACKOFF_MAX_MS:-60000}
+      # Optional integrations: leave empty to disable the provider/notifier.
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      BILLPLZ_API_KEY: ${BILLPLZ_API_KEY:-}
+      BILLPLZ_COLLECTION_ID: ${BILLPLZ_COLLECTION_ID:-}
+      BILLPLZ_SIGNATURE_KEY: ${BILLPLZ_SIGNATURE_KEY:-}
+      BILLPLZ_X_SIGNATURE_KEY: ${BILLPLZ_X_SIGNATURE_KEY:-}
+      IPAY88_MERCHANT_CODE: ${IPAY88_MERCHANT_CODE:-}
+      IPAY88_MERCHANT_KEY: ${IPAY88_MERCHANT_KEY:-}
+      IPAY88_SIGNATURE_KEY: ${IPAY88_SIGNATURE_KEY:-}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@gymlytics.app}
+    volumes:
+      - gymlytics-data:/data
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: ghcr.io/${GHCR_OWNER:-harrysuke}/gymlytics-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      API_UPSTREAM: api:3000
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  gymlytics-data:
