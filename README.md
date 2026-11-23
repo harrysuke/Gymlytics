@@ -249,6 +249,8 @@ gymlytics/
 
 ## Documentation
 
+New to using the product? Start with the [end-user manual](docs/end-user-manual.md), [FAQ](docs/faq.md) or [troubleshooting guide](docs/troubleshooting.md).
+
 - [Architecture overview & C4 diagrams](docs/README.md)
 - [Architecture Decision Records](docs/adr/README.md)
 - [Database schema](packages/db/src/schema/index.ts)

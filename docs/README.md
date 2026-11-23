@@ -34,3 +34,27 @@ Diagrams are Mermaid `C4*` diagrams and render in GitHub, GitLab and most Markdo
 | PCI scope reduction | Only provider tokens stored; no PAN/CVV in our database |
 | Multi-tenancy | `academy_id` on every domain table; scoped queries in every route |
 | Testability | Pure domain functions; injectable `LocalDatabase`, `SyncTransport`, `Notifier` |
+
+## Product and delivery documentation
+
+| Document | What it answers |
+| --- | --- |
+| [Project Charter / SOW](project-charter.md) | Why the project exists, scope, deliverables, milestones, budget structure, stakeholders and sign-off. |
+| [Product Requirements Document](prd.md) | Who the product serves, which features are in scope, and testable user stories. |
+| [Software Requirements Specification](srs.md) | Exact functional and non-functional requirements with PRD/test traceability. |
+| [Software Architecture Document](sad.md) | Tech stack, runtime and data flows, API surface and database schema. |
+| [Test Plan & Test Cases](test-plan.md) | QA strategy, environments, automated coverage, 24 step-by-step cases and UAT sign-off. |
+| [Deployment & Runbook](deployment-runbook.md) | CI/CD, configuration, deployment, database backup/restore, rollback and troubleshooting. |
+| [Release Notes](release-notes.md) | What changed in each release and how a release is published. |
+
+Architecture views (C4 and ADRs) remain the authoritative source for design decisions; the documents above reference them rather than duplicating them.
+
+## End-user help
+
+These three guides are written for non-technical users and are the ones to share with academy staff, members and guardians.
+
+| Document | What it covers |
+| --- | --- |
+| [End-User Manual](end-user-manual.md) | Onboarding tutorials, role-based walkthroughs for the staff console, kiosk, waiver tablet, mobile app, family portal and widgets, plus everyday recipes and a glossary. |
+| [FAQ](faq.md) | Short answers about accounts, bookings, waivers, billing, family access, reports and the mobile app. |
+| [Self-Service Troubleshooting](troubleshooting.md) | Symptom-based fixes for sign-in, kiosk, waiver, booking and widget problems, known limits and an escalation checklist. |
